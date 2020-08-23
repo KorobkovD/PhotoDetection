@@ -1,6 +1,6 @@
-﻿using System;
+﻿using PhotoDetection.Extensions;
+using System;
 using System.Device.Gpio;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -79,22 +79,10 @@ namespace PhotoDetection
         /// </summary>
         private static void TakePhoto()
         {
+            Console.WriteLine("Taking a photo...");
             var fileName = string.Format(ShotFileNameFormat, $"{DateTime.Now:ddMMyyyyHHmmss}");
             var fullFileName = Path.Combine(PhotoDirectory, fileName);
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = "/bin/bash",
-                Arguments = $"-c \"{string.Format(ShotCommandFormat, fullFileName)}\"",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            var process = new Process()
-            {
-                StartInfo = startInfo,
-            };
-            process.Start();
-            process.WaitForExit();
+            string.Format(ShotCommandFormat, fullFileName).Bash();
         }
 
         private static void Main(string[] args)
@@ -122,13 +110,15 @@ namespace PhotoDetection
                     var motionStatus = gpioController.Read(PirPin);
                     if (motionStatus == PinValue.Low)
                     {
+                        Console.ForegroundColor = ConsoleColor.Gray;
                         Console.WriteLine("All clear here...");
                         gpioController.Write(GreenLedPin, PinValue.Low);
                         currentMotionDetectedIteration = 0;
                     }
                     else
                     {
-                        Console.WriteLine("Motion detected! Taking a photo...");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Motion detected!");
                         gpioController.Write(GreenLedPin, PinValue.High);
                         currentMotionDetectedIteration++;
                         // Делаем фото на каждое пятое срабатывание датчика
